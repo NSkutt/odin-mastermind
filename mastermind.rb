@@ -4,7 +4,6 @@
 class Codemaster
   def initialize
     @choices = Array.new(4) { [1, 2, 3, 4, 5, 6] }
-    @player = Player.new
     set_code
   end
 
@@ -48,6 +47,7 @@ class Player
   def initialize
     @name = gets.chomp
     @error = false
+    @codemaster = Codemaster.new
   end
 
   def input
@@ -59,6 +59,7 @@ class Player
     @guess.delete_if { |guess| guess == ' ' }
     @guess.each_with_index { |item, idx| @guess[idx] = item.to_i }
     check_errors(@guess)
+    @codemaster.check_code(@guess)
   end
 
   def check_errors(code)
@@ -72,4 +73,4 @@ class Player
   end
 end
 
-_game = Codemaster.new
+_game = Player.new
