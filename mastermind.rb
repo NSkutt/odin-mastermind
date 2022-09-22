@@ -57,6 +57,11 @@ class Player
     @guess.each_with_index { |item, idx| @guess[idx] = item.to_i }
     check_errors(@guess)
   end
+
+  def check_errors(code)
+    error unless code.is_a?(Array) && code.length == 4
+    error unless code.each { |guess| guess < 7 && guess.positive? }
+  end
 end
 
 _game = Codemaster.new
