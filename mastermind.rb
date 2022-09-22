@@ -14,8 +14,9 @@ class Codemaster
 
   def blackpegs(guess)
     @black = 0
-    i = 0
+    i = -1
     while i < @code.length
+      i += 1
       next unless @code[i] == guess[i]
 
       @black += 1
@@ -26,8 +27,9 @@ class Codemaster
 
   def whitepegs(guess)
     @white = 0
-    i = 0
+    i = -1
     while i < @code.length
+      i += 1
       next unless @code.include?(guess[i])
 
       @white += 1
@@ -45,9 +47,11 @@ end
 # creates the player, takes guesses, gives them to the Codemaster
 class Player
   def initialize
+    p 'Name for player?'
     @name = gets.chomp
     @error = false
     @codemaster = Codemaster.new
+    input
   end
 
   def input
