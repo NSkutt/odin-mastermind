@@ -4,6 +4,7 @@
 class Codemaster
   def initialize
     @choices = Array.new(4) { [1, 2, 3, 4, 5, 6] }
+    @player = Player.new
     set_code
   end
 
@@ -39,6 +40,22 @@ class Codemaster
 
   def set_code
     @code = @choices.flatten.sample(4)
+  end
+end
+
+# creates the player, takes guesses, gives them to the Codemaster
+class Player
+  def initialize
+    @name = gets.chomp
+  end
+
+  def input
+    p "What's your guess? (Please give 4 numbers 1 - 6)"
+    input = gets.chomp
+    @guess = input.chars
+    @guess.delete_if { |guess| guess == ' ' }
+    @guess.each_with_index { |item, idx| @guess[idx] = item.to_i }
+    check_errors(@guess)
   end
 end
 
