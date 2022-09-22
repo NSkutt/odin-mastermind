@@ -47,10 +47,13 @@ end
 class Player
   def initialize
     @name = gets.chomp
+    @error = false
   end
 
   def input
-    p "What's your guess? (Please give 4 numbers 1 - 6)"
+    msg = @error ? 'Invalid entry! Try again' : "What's your guess? (Please give 4 numbers 1 - 6)"
+    p msg
+    @error = false
     input = gets.chomp
     @guess = input.chars
     @guess.delete_if { |guess| guess == ' ' }
@@ -61,6 +64,11 @@ class Player
   def check_errors(code)
     error unless code.is_a?(Array) && code.length == 4
     error unless code.each { |guess| guess < 7 && guess.positive? }
+  end
+
+  def error
+    @error = true
+    input
   end
 end
 
