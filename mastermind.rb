@@ -2,7 +2,7 @@
 
 # Creates, contains, and checks against, the code
 class Codemaster
-  attr_reader :victory
+  attr_reader :victory, :choices
 
   def initialize
     @choices = Array.new(4) { [1, 2, 3, 4, 5, 6] }
@@ -78,9 +78,13 @@ class Player
 
   def check_errors(code)
     error unless code.is_a?(Array) && code.length == 4
-    error unless code.each { |guess| guess < 7 && guess.positive? }
-    # code.each { |guess| p guess < 7  }
-    # code.each { |guess| p guess.positive? }
+    code.each do |guess|
+      if guess > @codemaster.choices.flatten.last
+        error
+      elsif @codemaster.choices.flatten.include?(guess) != true
+        error
+      end
+    end
   end
 
   def error
