@@ -35,7 +35,7 @@ class Codemaster
   def whitepegs(guess, code)
     @white = 0
     i = -1
-    while i < (code.length - 1)
+    while i < (guess.length - 1)
       i += 1
       next unless code.include?(guess[i])
 
