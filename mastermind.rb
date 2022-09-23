@@ -49,7 +49,6 @@ class Codemaster
 
   def set_code
     @code = @choices.flatten.sample(4)
-    p @code
   end
 end
 
