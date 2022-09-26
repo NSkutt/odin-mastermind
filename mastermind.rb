@@ -45,6 +45,10 @@ class Codemaster
     p "Black: #{@black}, White: #{@white}"
   end
 
+  def code2(code)
+    @code = code
+  end
+
   private
 
   def set_code
