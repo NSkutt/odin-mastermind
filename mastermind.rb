@@ -60,9 +60,22 @@ class Player
     @error = false
     @codemaster = Codemaster.new
     @count = 1
-    input
+    code_or_play
   end
 
+  def code_or_play
+    p 'Would you like to make the code (1) or guess the code (2)'
+    choice = gets.chomp
+    case choice
+    when '1'
+      make_code
+    when '2'
+      input
+    else
+      p 'Invalid choice! Exiting...'
+    end
+  end
+  
   def input
     msg = @error ? 'Invalid entry! Try again' : "What's your guess? (Please give 4 numbers 1 - 6)"
     p msg
