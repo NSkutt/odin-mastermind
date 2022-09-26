@@ -75,7 +75,13 @@ class Player
       p 'Invalid choice! Exiting...'
     end
   end
-  
+
+  def make_code
+    p 'What is your code?'
+    code = gets.chomp
+    @codemaster.code2(code)
+  end
+
   def input
     msg = @error ? 'Invalid entry! Try again' : "What's your guess? (Please give 4 numbers 1 - 6)"
     p msg
