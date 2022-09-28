@@ -84,6 +84,31 @@ class Player
     p 'What is your code?'
     code = gets.chomp
     @codemaster.code2(code)
+    @comp = Ai.new
+    difficulty(@comp.ans)
+  end
+
+  def difficulty(level)
+    case level
+    when 'EASY'
+      guessing('easy', false)
+    when 'MEDIUM'
+      guessing('easy', true)
+    else
+      guessing('hard')
+    end
+  end
+
+  def guessing(ease, med)
+    options = @codemaster.choices
+    guess = []
+    blackpegs = {}
+    whitepegs = {}
+    if ease == 'hard'
+      @comp.hard(options, guess, [blackpegs, whitepegs], med)
+    else
+      @comp.easy(options, guess, [blackpegs, whitepegs], med)
+    end
   end
 
   def input
@@ -130,6 +155,20 @@ class Player
     ans = gets.chomp
     ans.upcase == 'YES' ? _again = Player.new : exit
   end
+end
+
+#This is the AI for if the player wishes to make the code
+class Ai
+  def initialize
+    p 'Would you like to play against the Easy or the Hard AI?'
+    @ans = gets.chomp.upcase
+    @ans
+  end
+
+  def easy(opt, guess, pegs, med)
+
+  end
+
 end
 
 _game = Player.new
