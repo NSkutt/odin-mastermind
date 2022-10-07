@@ -5,18 +5,18 @@ class Codemaster
   attr_reader :victory, :choices
 
   def initialize
-    @choices = Array.new(4) { [1, 2, 3, 4, 5, 6] }
+    @choices = (1..6).to_a
     set_code
   end
 
-  def check_code(guess)
+  def check_code(guess, computer)
     p guess
     return @victory = true if guess == @code
 
-    blackpegs(guess)
+    blackpegs(guess, computer)
   end
 
-  def blackpegs(guess)
+  def blackpegs(guess, computer)
     @black = 0
     i = -1
     arr = []
@@ -27,12 +27,12 @@ class Codemaster
 
       @black += 1
       guess[i] = 0
-      arr[i] = 'x'
+      arr[i] = computer == false ? 'x' : { i: arr[i] }
     end
-    whitepegs(guess, arr)
+    whitepegs(guess, arr, computer)
   end
 
-  def whitepegs(guess, code)
+  def whitepegs(guess, code, computer)
     @white = 0
     i = -1
     while i < (guess.length - 1)
@@ -43,6 +43,7 @@ class Codemaster
       code.delete_at(code.index(guess[i]))
     end
     p "Black: #{@black}, White: #{@white}"
+    return code if computer == true
   end
 
   def code2(code)
@@ -52,7 +53,8 @@ class Codemaster
   private
 
   def set_code
-    @code = @choices.flatten.sample(4)
+    @code = []
+    4.times { @code.push(@choices.sample) }
   end
 end
 
@@ -85,31 +87,39 @@ class Player
     code = gets.chomp
     @codemaster.code2(code)
     @comp = Ai.new
-    difficulty(@comp.ans)
+    guessing(@comp.ans)
   end
 
-  def difficulty(level)
-    case level
-    when 'EASY'
-      guessing('easy', false)
-    when 'MEDIUM'
-      guessing('easy', true)
-    else
-      guessing('hard')
-    end
-  end
-
-  def guessing(ease, med)
+  def guessing(ease)
     options = @codemaster.choices
-    guess = []
     blackpegs = {}
     whitepegs = {}
+    pegs = feedback([blackpegs, whitepegs])
+    # pegs = guesswork(pegs)
     if ease == 'hard'
-      @comp.hard(options, guess, [blackpegs, whitepegs], med)
+      @comp.hard(options, pegs)
     else
-      @comp.easy(options, guess, [blackpegs, whitepegs], med)
+      med = @comp.ans == 'EASY'
+      guess = @comp.easy(options, pegs)
     end
+    pegs = @codemaster.check_code(guess, true)
+    guessmachine(pegs)
   end
+
+  def guessmachine(pegs)
+    p pegs
+    guessing(@comp.ans)
+    @count += 1
+  end
+
+  def feedback(pegs)
+    guess = Array.new(4)
+    pegs[1].each_pair { |idx, val| guess[idx] = val }
+    guess
+    # Figure out medium later
+  end
+
+  # ------ Blank Line Separator ------
 
   def input
     msg = @error ? 'Invalid entry! Try again' : "What's your guess? (Please give 4 numbers 1 - 6)"
@@ -141,7 +151,7 @@ class Player
 
   def play(code)
     victory('loss') if @count > 10
-    @codemaster.check_code(code)
+    @codemaster.check_code(code, false)
     victory(@name) if @codemaster.victory == true
     @count += 1
     input
@@ -157,18 +167,27 @@ class Player
   end
 end
 
-#This is the AI for if the player wishes to make the code
+# This is the AI for if the player wishes to make the code
 class Ai
+  attr_reader :ans
+
   def initialize
     p 'Would you like to play against the Easy or the Hard AI?'
     @ans = gets.chomp.upcase
-    @ans
   end
 
-  def easy(opt, guess, pegs, med)
-
+  def easy(opt, pegs)
+    i = (4 - pegs.compact.length)
+    p pegs.compact.length
+    guess = pegs
+    while i.positive?
+      idx = pegs.find_index(nil)
+      guess[idx] = opt.sample
+      i -= 1
+    end
+    p "This is the #{guess}"
+    guess
   end
-
 end
 
 _game = Player.new
