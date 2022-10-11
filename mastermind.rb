@@ -10,7 +10,6 @@ class Codemaster
   end
 
   def check_code(guess, computer)
-    p guess
     return @victory = true if guess == @code
 
     blackpegs(guess, computer)
@@ -26,8 +25,8 @@ class Codemaster
       next unless @code[i] == guess[i]
 
       @black += 1
-      guess[i] = 0
-      arr[i] = computer == false ? 'x' : { i: arr[i] }
+      guess[i] = computer == false ? 0 : { i.to_s.to_sym => arr[i] }
+      arr[i] = 'x'
     end
     whitepegs(guess, arr, computer)
   end
@@ -43,11 +42,11 @@ class Codemaster
       code.delete_at(code.index(guess[i]))
     end
     p "Black: #{@black}, White: #{@white}"
-    return code if computer == true
+    return guess if computer == true
   end
 
   def code2(code)
-    @code = code
+    @code = code.to_i.digits.reverse
   end
 
   private
@@ -61,6 +60,7 @@ end
 # creates the player, takes guesses, gives them to the Codemaster
 class Player
   def initialize
+    @maker = false
     p 'Name for player?'
     @name = gets.chomp
     @error = false
@@ -83,6 +83,7 @@ class Player
   end
 
   def make_code
+    @maker = true
     p 'What is your code?'
     code = gets.chomp
     @codemaster.code2(code)
@@ -90,10 +91,10 @@ class Player
     guessing(@comp.ans)
   end
 
-  def guessing(ease)
+  def guessing(ease, info = '')
     options = @codemaster.choices
-    blackpegs = {}
-    whitepegs = {}
+    blackpegs = Hash.new(info)
+    whitepegs = Hash.new(info)
     pegs = feedback([blackpegs, whitepegs])
     # pegs = guesswork(pegs)
     if ease == 'hard'
@@ -102,14 +103,7 @@ class Player
       med = @comp.ans == 'EASY'
       guess = @comp.easy(options, pegs)
     end
-    pegs = @codemaster.check_code(guess, true)
-    guessmachine(pegs)
-  end
-
-  def guessmachine(pegs)
-    p pegs
-    guessing(@comp.ans)
-    @count += 1
+    pegs = play(guess)
   end
 
   def feedback(pegs)
@@ -151,10 +145,10 @@ class Player
 
   def play(code)
     victory('loss') if @count > 10
-    @codemaster.check_code(code, false)
+    @codemaster.check_code(code, @maker)
     victory(@name) if @codemaster.victory == true
     @count += 1
-    input
+    @maker == false ? input : guessing(@comp.ans)
   end
 
   def victory(condition)
@@ -178,14 +172,12 @@ class Ai
 
   def easy(opt, pegs)
     i = (4 - pegs.compact.length)
-    p pegs.compact.length
     guess = pegs
     while i.positive?
       idx = pegs.find_index(nil)
       guess[idx] = opt.sample
       i -= 1
     end
-    p "This is the #{guess}"
     guess
   end
 end
