@@ -91,14 +91,12 @@ class Player
     guessing(@comp.ans)
   end
 
-  def guessing(ease, info = '')
+  def guessing(ease, info = [])
+    # p info
     options = @codemaster.choices
-    blackpegs = Hash.new(info)
-    whitepegs = Hash.new(info)
-    pegs = feedback([blackpegs, whitepegs])
-    # pegs = guesswork(pegs)
+    pegs = thingamajig(info)
     if ease == 'hard'
-      @comp.hard(options, pegs)
+      guess = @comp.hard(options, pegs)
     else
       med = @comp.ans == 'EASY'
       guess = @comp.easy(options, pegs)
@@ -106,9 +104,19 @@ class Player
     pegs = play(guess)
   end
 
+  def thingamajig(pegs)
+    blackpegs = {}
+    whitepegs = {}
+    pegs.each do |peg|
+      blackpegs.update(peg) if peg.is_a?(Hash)
+    end
+
+    feedback([blackpegs, whitepegs])
+  end
+
   def feedback(pegs)
     guess = Array.new(4)
-    pegs[1].each_pair { |idx, val| guess[idx] = val }
+    pegs[0].each_pair { |idx, val| guess[idx.to_s.to_i] = val }
     guess
     # Figure out medium later
   end
@@ -144,11 +152,15 @@ class Player
   end
 
   def play(code)
-    victory('loss') if @count > 10
-    @codemaster.check_code(code, @maker)
-    victory(@name) if @codemaster.victory == true
+    if @count > 10
+      @maker == false ? victory('loss') : victory(@name)
+    end
+    results = @codemaster.check_code(code, @maker)
+    if @codemaster.victory == true
+      @maker == false ? victory(@name) : victory('loss')
+    end
     @count += 1
-    @maker == false ? input : guessing(@comp.ans)
+    @maker == false ? input : guessing(@comp.ans, results)
   end
 
   def victory(condition)
