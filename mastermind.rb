@@ -18,17 +18,17 @@ class Codemaster
   def blackpegs(guess, computer)
     @black = 0
     i = -1
-    arr = []
+    check = []
     while i < (@code.length - 1)
       i += 1
-      arr.push(@code[i])
+      check.push(@code[i])
       next unless @code[i] == guess[i]
 
       @black += 1
-      guess[i] = computer == false ? 0 : { i.to_s.to_sym => arr[i] }
-      arr[i] = 'x'
+      guess[i] = computer == false ? 0 : { i.to_s.to_sym => check[i] }
+      check[i] = 'x'
     end
-    whitepegs(guess, arr, computer)
+    whitepegs(guess, check, computer)
   end
 
   def whitepegs(guess, code, computer)
@@ -40,13 +40,14 @@ class Codemaster
 
       @white += 1
       code.delete_at(code.index(guess[i]))
+      guess[i] = [guess[i]]
     end
     p "Black: #{@black}, White: #{@white}"
     return guess if computer == true
   end
 
   def code2(code)
-    @code = code.to_i.digits.reverse
+    @code = code
   end
 
   private
@@ -84,17 +85,18 @@ class Player
 
   def make_code
     @maker = true
-    p 'What is your code?'
-    code = gets.chomp
+    msg = @error == false ? 'What is your code?' : 'Invalid Entry, please try again.'
+    p msg
+    code = gets.chomp.to_i.digits.reverse
+    check_errors(code)
     @codemaster.code2(code)
     @comp = Ai.new
     guessing(@comp.ans)
   end
 
   def guessing(ease, info = [])
-    # p info
     options = @codemaster.choices
-    pegs = thingamajig(info)
+    pegs = peg_check(info)
     if ease == 'hard'
       guess = @comp.hard(options, pegs)
     else
@@ -104,24 +106,31 @@ class Player
     pegs = play(guess)
   end
 
-  def thingamajig(pegs)
+  def peg_check(pegs)
     blackpegs = {}
-    whitepegs = {}
+    whitepegs = []
     pegs.each do |peg|
       blackpegs.update(peg) if peg.is_a?(Hash)
+      whitepegs.push(peg.first) if peg.is_a?(Array)
     end
-
     feedback([blackpegs, whitepegs])
   end
 
   def feedback(pegs)
     guess = Array.new(4)
     pegs[0].each_pair { |idx, val| guess[idx.to_s.to_i] = val }
+    guess.each_index do |idx|
+      next unless guess[idx].nil?
+      next unless pegs[1].empty? == false
+
+      guess[idx] = pegs[1].sample
+      used = pegs[1].find_index(guess[idx])
+      pegs[1].delete_at(used)
+    end
     guess
-    # Figure out medium later
   end
 
-  # ------ Blank Line Separator ------
+  # ------ Code Making above Code breaking below ------
 
   def input
     msg = @error ? 'Invalid entry! Try again' : "What's your guess? (Please give 4 numbers 1 - 6)"
@@ -148,7 +157,7 @@ class Player
 
   def error
     @error = true
-    input
+    @maker == false ? input : make_code
   end
 
   def play(code)
@@ -190,6 +199,7 @@ class Ai
       guess[idx] = opt.sample
       i -= 1
     end
+    p guess
     guess
   end
 end
