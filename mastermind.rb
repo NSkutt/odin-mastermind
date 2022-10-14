@@ -97,13 +97,8 @@ class Player
   def guessing(ease, info = [])
     options = @codemaster.choices
     pegs = peg_check(info)
-    if ease == 'hard'
-      guess = @comp.hard(options, pegs)
-    else
-      med = @comp.ans == 'EASY'
-      guess = @comp.easy(options, pegs)
-    end
-    pegs = play(guess)
+    guess = ease == hard ? @comp.hard(options, pegs) : @comp.easy(options, pegs)
+    play(guess)
   end
 
   def peg_check(pegs)
