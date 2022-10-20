@@ -75,7 +75,7 @@ class Player
     choice = gets.chomp
     case choice
     when '1'
-      make_code
+      make_code(@codemaster.choices)
     when '2'
       input
     else
@@ -97,7 +97,7 @@ class Player
   def guessing(ease, info = [])
     options = @codemaster.choices
     pegs = peg_check(info)
-    guess = ease == hard ? @comp.hard(options, pegs) : @comp.easy(options, pegs)
+    guess = ease == 'HARD' ? pegs : @comp.easy(options, pegs)
     play(guess)
   end
 
@@ -108,7 +108,11 @@ class Player
       blackpegs.update(peg) if peg.is_a?(Hash)
       whitepegs.push(peg.first) if peg.is_a?(Array)
     end
-    feedback([blackpegs, whitepegs])
+    if @comp.ans == 'HARD'
+      @comp.hard(@count, guess, blackpegs.lengh, whitepegs.length)
+    else
+      feedback([blackpegs, whitepegs])
+    end
   end
 
   def feedback(pegs)
@@ -173,7 +177,7 @@ class Player
     p 'Would you like to play again?'
     p 'Yes/No'
     ans = gets.chomp
-    ans.upcase == 'YES' ? _again = Player.new : exit
+    ans.upcase == 'YES' ? Player.new : exit
   end
 end
 
@@ -181,9 +185,14 @@ end
 class Ai
   attr_reader :ans
 
-  def initialize
+  def initialize(options)
     p 'Would you like to play against the Easy or the Hard AI?'
     @ans = gets.chomp.upcase
+    return unless @ans == 'HARD'
+
+# Create the set S of 1,296 possible codes {1111, 1112, ... 6665, 6666}.
+    @s = []
+    options.repeated_permuation(4) { |combo| @s.push(combo) }
   end
 
   def easy(opt, pegs)
@@ -197,6 +206,29 @@ class Ai
     p guess
     guess
   end
+
+  # --- Line separating EASY from HARD ---
+
+  def hard(count, prev, blackpegs, whitepegs)
+    prev.each_with_index do |item, idx|
+      prev[idx] = item.values if item.is_a?(Hash)
+      prev[idx] = item[0] if item.is_a?(Array)
+    end
+    @s.delete(prev)
+    _guess = decipherbp(prev, blackpegs, whitepegs)
+  end
+
+  def decipherbp(prev, bkp, wtp)
+    guess = []
+    decipherwp(prev, guess, wtp)
+  end
+  # What you're going to need to do. Somehow take previous guess, for black pegs, loop through the previous guess to get every possible combination of those pegs (eg for 3 pegs: 123*, 12*4, 1*34, *234) and remove any item of @s that doesn't contain one of those exact sequences For white pegs, somehow take each set of digits ***individually*** (unlike blackpegs, which are united ohhhhh, gonna need regex for black pegs) and check each ARRAY of white peg options against @s.... not sure how that is going to work possibly will need to use both &&s and ||s for filtration, or maybe another use of regex (eg for 3 pegs: [1,2,3] [1,2,4] [1,3,4] [2,3,4] @s.contains? arr1[0] && arr1[2] && arr1[3] || arr2[0] etc etc).
+
+  def decipherwp(prev, guess, wtp)
+    keep = []
+    prev.repeated_combination(wtp) { |combo| keep.push(combo) }
+
+  end
 end
 
-_game = Player.new
+Player.new
