@@ -220,14 +220,24 @@ class Ai
 
   def decipherbp(prev, bkp, wtp)
     guess = []
-    decipherwp(prev, guess, wtp)
+    decipherwp(prev, wtp)
   end
   # What you're going to need to do. Somehow take previous guess, for black pegs, loop through the previous guess to get every possible combination of those pegs (eg for 3 pegs: 123*, 12*4, 1*34, *234) and remove any item of @s that doesn't contain one of those exact sequences For white pegs, somehow take each set of digits ***individually*** (unlike blackpegs, which are united ohhhhh, gonna need regex for black pegs) and check each ARRAY of white peg options against @s.... not sure how that is going to work possibly will need to use both &&s and ||s for filtration, or maybe another use of regex (eg for 3 pegs: [1,2,3] [1,2,4] [1,3,4] [2,3,4] @s.contains? arr1[0] && arr1[2] && arr1[3] || arr2[0] etc etc).
 
-  def decipherwp(prev, guess, wtp)
+  def decipherwp(prev, wtp)
     keep = []
-    prev.repeated_combination(wtp) { |combo| keep.push(combo) }
-
+    merger = {}
+    prev.combination(wtp) { |combo| keep.push(combo) }
+    idx = keep.first.length <=> 2
+    i = 0
+    keep.each do |arr|
+      keeping = []
+      @s.each_index do |code|
+        keeping.push(@s[code]) if @s.include(arr[1] && arr[idx] && arr [-1])
+      end
+      merger.store("set#{i}".to_sym => keeping)
+    end
+    @s = merger.values
   end
 end
 
