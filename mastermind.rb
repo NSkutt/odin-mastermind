@@ -83,14 +83,14 @@ class Player
     end
   end
 
-  def make_code
+  def make_code(options)
     @maker = true
     msg = @error == false ? 'What is your code?' : 'Invalid Entry, please try again.'
     p msg
     code = gets.chomp.to_i.digits.reverse
     check_errors(code)
     @codemaster.code2(code)
-    @comp = Ai.new
+    @comp = Ai.new(options)
     guessing(@comp.ans)
   end
 
@@ -109,7 +109,7 @@ class Player
       whitepegs.push(peg.first) if peg.is_a?(Array)
     end
     if @comp.ans == 'HARD'
-      @comp.hard(@count, guess, blackpegs.lengh, whitepegs.length)
+      @comp.hard(@count, pegs, blackpegs.length, whitepegs.length)
     else
       feedback([blackpegs, whitepegs])
     end
@@ -190,9 +190,9 @@ class Ai
     @ans = gets.chomp.upcase
     return unless @ans == 'HARD'
 
-# Create the set S of 1,296 possible codes {1111, 1112, ... 6665, 6666}.
+# Create the set S of 1,296 possible codes {1111, 1112, ... 6665, 6666}. Step 1
     @s = []
-    options.repeated_permuation(4) { |combo| @s.push(combo) }
+    options.repeated_permutation(4) { |combo| @s.push(combo) }
   end
 
   def easy(opt, pegs)
@@ -210,26 +210,27 @@ class Ai
   # --- Line separating EASY from HARD ---
 
   def hard(count, prev, blackpegs, whitepegs)
+    return [1, 1, 2, 2] if count == 1
+
     prev.each_with_index do |item, idx|
       prev[idx] = item.values if item.is_a?(Hash)
       prev[idx] = item[0] if item.is_a?(Array)
     end
     @s.delete(prev)
-    _guess = decipherbp(prev, blackpegs, whitepegs)
+    decipherbp(prev, blackpegs, whitepegs)
   end
 
   def decipherbp(prev, bkp, wtp)
-    base_set = prev.push('\d')
+    base_set = prev + ['\d']
     keep = []
     base_set.permutation(bkp) { |perm| keep.push(perm) }
-    cleanbp(keep, prev, wtp)
+    cleanbp(keep, prev, (bkp + wtp))
   end
 
   def cleanbp(perms, prev, wtp)
     keeping = []
     perms.each do |code|
-      reducer = ''
-      code.each { |item| reducer += item.to_s }
+      reducer = code.join
       @s.each do |poss|
         keeping.push(poss) if /#{reducer}/.match?(poss.join)
       end
@@ -242,6 +243,10 @@ class Ai
     keep = []
     merger = {}
     prev.combination(wtp) { |combo| keep.push(combo) }
+    keep.each do |arr|
+      arr.each_with_index { |item, idx| arr[idx] = item[0] if item.is_a?(Array) }
+    end
+    p keep
     idx = keep.first.length <=> 2
     iter = 0
     cleanwp(keep, merger, idx, iter)
@@ -251,12 +256,22 @@ class Ai
     keep.each do |arr|
       keeping = []
       @s.each_index do |code|
-        keeping.push(@s[code]) if @s.include(arr[1] && arr[idx] && arr [-1])
+        next unless @s[code].count(arr.first) >= arr.count(arr.first) &&
+                    @s[code].count(arr[idx]) >= arr.count(arr[idx]) &&
+                    @s[code].count(arr.last) >= arr.count(arr.last)
+
+        keeping.push(@s[code])
       end
-      merger.store("set#{iter}".to_sym => keeping)
+      merger.store("set#{iter}".to_sym, keeping)
       iter += 1
     end
-    @s = merger.values
+    @s = merger.values.flatten(1).uniq
+    newguess
+  end
+
+  def newguess
+    p @s
+    exit
   end
 end
 
