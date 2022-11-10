@@ -213,7 +213,7 @@ class Ai
     return [1, 1, 2, 2] if count == 1
 
     prev.each_with_index do |item, idx|
-      prev[idx] = item.values if item.is_a?(Hash)
+      prev[idx] = item.values[0] if item.is_a?(Hash)
       prev[idx] = item[0] if item.is_a?(Array)
     end
     @s.delete(prev)
@@ -243,13 +243,23 @@ class Ai
     keep = []
     merger = {}
     prev.combination(wtp) { |combo| keep.push(combo) }
-    keep.each do |arr|
-      arr.each_with_index { |item, idx| arr[idx] = item[0] if item.is_a?(Array) }
-    end
-    p keep
     idx = keep.first.length <=> 2
     iter = 0
+    return edge_case(prev, wtp) if wtp < 1 || wtp > 3
+
     cleanwp(keep, merger, idx, iter)
+  end
+
+  def edge_case(prev, wtp)
+    if wtp < 1
+      prev.each { |num| @s.delete_if { |set| set.include?(num) } }
+    elsif wtp > 3
+      @s.delete_if { |set| set.sort != prev.sort }
+      @s.uniq!
+    else
+      p 'Error!? Less than 1 and more than 1, more than 3 and less than 3'
+    end
+    newguess
   end
 
   def cleanwp(keep, merger, idx, iter)
