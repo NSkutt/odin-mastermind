@@ -218,6 +218,7 @@ class Ai
     end
     @s.delete(prev)
     decipherbp(prev, blackpegs, whitepegs)
+    minmax_setup((blackpegs + whitepegs))
   end
 
   def decipherbp(prev, bkp, wtp)
@@ -259,7 +260,7 @@ class Ai
     else
       p 'Error!? Less than 1 and more than 1, more than 3 and less than 3'
     end
-    newguess
+    @s
   end
 
   def cleanwp(keep, merger, idx, iter)
@@ -276,12 +277,60 @@ class Ai
       iter += 1
     end
     @s = merger.values.flatten(1).uniq
-    newguess
   end
 
-  def newguess
-    p @s
+  def minmax_setup(pegs)
+    i = 0
+    hsh = {}
+    arr = @s.to_s
+    set = []
+    (1..6).to_a.repeated_permutation(4) { |perm| set.push(perm) }
+    scores = minmax(i, hsh, arr, set, pegs)
+
     exit
+  end
+
+  def minmax(iter, scores, save, set, pegs)
+    set.each do |perm|
+      limit = 5
+      wtp = 0
+      while wtp < limit
+        scores["s#{iter}:#{wtp}".to_sym] = decipherwp(perm, wtp).length
+        # p "s#{iter}:#{wtp} : #{scores["s#{iter}:#{wtp}".to_sym]}"
+        @s = arrayify(save.chars)
+        wtp += 1
+      end
+      iter += 1
+    end
+    pessimism(scores)
+  end
+
+  def arrayify(arr)
+    arr.each do |elem|
+      if elem == '['
+        arr.push([])
+      elsif elem.is_a?(Array)
+        break
+      elsif elem.to_i.positive?
+        arr.last.push(elem.to_i)
+      else
+        next
+      end
+    end
+    arr.delete_if { |char| char.is_a?(String) }
+    arr.uniq!
+    arr
+  end
+
+  def pessimism(scores)
+    ans_sheet = []
+    scores.each_slice(5) do |batch|
+      x = batch.transpose[1].max
+      batch.each { |arr| ans_sheet.push(arr) if arr.include?(x) }
+    end
+    ans_sheet.delete_if { |arr| arr.include?(0) }
+    y = ans_sheet.transpose[1].min
+    ans_sheet.each { |arr| p arr if arr.include?(y) }
   end
 end
 
