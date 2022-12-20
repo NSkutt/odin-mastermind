@@ -216,28 +216,37 @@ class Ai
       prev[idx] = item.values[0] if item.is_a?(Hash)
       prev[idx] = item[0] if item.is_a?(Array)
     end
-    @s.delete(prev)
     decipherbp(prev, blackpegs, whitepegs)
-    minmax_setup((blackpegs + whitepegs))
+    minmax_setup
   end
 
-  def decipherbp(prev, bkp, wtp)
-    base_set = prev + ['\d']
-    keep = []
-    base_set.permutation(bkp) { |perm| keep.push(perm) }
-    cleanbp(keep, prev, (bkp + wtp))
+  def decipherbp(prev, bkp, wtp, testing: false)
+    @s.delete(prev)
+    return decipherwp(prev, wtp) if testing
+
+    if bkp.zero?
+      alt_filter(prev)
+      return decipherwp(prev, (bkp + wtp))
+    end
+
+    cleanbp(prev, bkp, wtp)
   end
 
-  def cleanbp(perms, prev, wtp)
+  def alt_filter(prev)
+    4.times { |i| @s.delete_if { |code| code[i - 1] == prev[i - 1] } }
+  end
+
+  def cleanbp(prev, bkp, wtp)
     keeping = []
-    perms.each do |code|
-      reducer = code.join
-      @s.each do |poss|
-        keeping.push(poss) if /#{reducer}/.match?(poss.join)
+    @s.each do |code|
+      filter = []
+      4.times do |i|
+        filter.push(code[i - 1] <=> prev[i - 1])
       end
+      keeping.push(code) if filter.count(0) == bkp
     end
     @s = keeping
-    decipherwp(prev, wtp)
+    decipherwp(prev, (bkp + wtp))
   end
 
   def decipherwp(prev, wtp)
@@ -248,6 +257,11 @@ class Ai
     iter = 0
     return edge_case(prev, wtp) if wtp < 1 || wtp > 3
 
+    4.times do |i|
+      @s.delete_if do |code|
+        prev.count(prev[i - 1]) > wtp && code.count(prev[i - 1]) >= prev.count(prev[i - 1])
+      end
+    end
     cleanwp(keep, merger, idx, iter)
   end
 
@@ -279,24 +293,27 @@ class Ai
     @s = merger.values.flatten(1).uniq
   end
 
-  def minmax_setup(pegs)
+  def minmax_setup
     i = 0
     hsh = {}
     arr = @s.to_s
     set = []
     (1..6).to_a.repeated_permutation(4) { |perm| set.push(perm) }
-    scores = minmax(i, hsh, arr, set, pegs)
-
-    exit
+    if @s.length == 1
+      p @s[0]
+      return @s[0]
+    end
+    score = minmax(i, hsh, arr, set)
+    p set[score]
+    set[score]
   end
 
-  def minmax(iter, scores, save, set, pegs)
+  def minmax(iter, scores, save, set)
     set.each do |perm|
       limit = 5
       wtp = 0
       while wtp < limit
-        scores["s#{iter}:#{wtp}".to_sym] = decipherwp(perm, wtp).length
-        # p "s#{iter}:#{wtp} : #{scores["s#{iter}:#{wtp}".to_sym]}"
+        scores["s#{iter}:#{wtp}".to_sym] = decipherbp(perm, 0, wtp, testing: true).length
         @s = arrayify(save.chars)
         wtp += 1
       end
@@ -330,7 +347,9 @@ class Ai
     end
     ans_sheet.delete_if { |arr| arr.include?(0) }
     y = ans_sheet.transpose[1].min
-    ans_sheet.each { |arr| p arr if arr.include?(y) }
+    ans_sheet.filter! { |arr| arr.include?(y) }
+    p @s
+    ans_sheet.first.first.slice(1, (ans_sheet.first.first.length - 3)).to_i
   end
 end
 
