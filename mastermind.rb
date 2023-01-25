@@ -156,7 +156,7 @@ class Player
 
   def error
     @error = true
-    @maker == false ? input : make_code
+    @maker == false ? input : make_code(@codemaster.choices)
   end
 
   def play(code)
@@ -224,16 +224,7 @@ class Ai
     @s.delete(prev)
     return decipherwp(prev, wtp) if testing
 
-    if bkp.zero?
-      alt_filter(prev)
-      return decipherwp(prev, (bkp + wtp))
-    end
-
     cleanbp(prev, bkp, wtp)
-  end
-
-  def alt_filter(prev)
-    4.times { |i| @s.delete_if { |code| code[i - 1] == prev[i - 1] } }
   end
 
   def cleanbp(prev, bkp, wtp)
@@ -241,9 +232,9 @@ class Ai
     @s.each do |code|
       filter = []
       4.times do |i|
-        filter.push(code[i - 1] <=> prev[i - 1])
+        filter.push(code[i] == prev[i])
       end
-      keeping.push(code) if filter.count(0) == bkp
+      keeping.push(code) if filter.count(true) == bkp
     end
     @s = keeping
     decipherwp(prev, (bkp + wtp))
@@ -257,11 +248,6 @@ class Ai
     iter = 0
     return edge_case(prev, wtp) if wtp < 1 || wtp > 3
 
-    4.times do |i|
-      @s.delete_if do |code|
-        prev.count(prev[i - 1]) > wtp && code.count(prev[i - 1]) >= prev.count(prev[i - 1])
-      end
-    end
     cleanwp(keep, merger, idx, iter)
   end
 
